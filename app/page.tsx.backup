@@ -22,6 +22,9 @@ import {
 } from '@/lib/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import CodeApplicationProgress, { type CodeApplicationState } from '@/components/CodeApplicationProgress';
+import FormBuilder from '@/components/FormBuilder';
+import FormPreview from '@/components/FormPreview';
+import EmbedCodeGenerator from '@/components/EmbedCodeGenerator';
 
 interface SandboxData {
   sandboxId: string;
@@ -86,6 +89,12 @@ export default function AISandboxPage() {
   const [sandboxFiles, setSandboxFiles] = useState<Record<string, string>>({});
   const [fileStructure, setFileStructure] = useState<string>('');
   
+  // Form Builder states
+  const [showFormBuilder, setShowFormBuilder] = useState(false);
+  const [showFormPreview, setShowFormPreview] = useState(false);
+  const [showEmbedGenerator, setShowEmbedGenerator] = useState(false);
+  const [currentFormData, setCurrentFormData] = useState<any>(null);
+  
   const [conversationContext, setConversationContext] = useState<{
     scrapedWebsites: Array<{ url: string; content: any; timestamp: Date }>;
     generatedComponents: Array<{ name: string; path: string; content: string }>;
@@ -119,7 +128,7 @@ export default function AISandboxPage() {
     thinkingText?: string;
     thinkingDuration?: number;
     currentFile?: { path: string; content: string; type: string };
-    files: Array<{ path: string; content: string; type: string; completed: boolean }>;
+    files: Array<{ path: string; content: string; type: string; completed: boolean; edited?: boolean }>;
     lastProcessedPosition: number;
     isEdit?: boolean;
   }>({
@@ -133,6 +142,28 @@ export default function AISandboxPage() {
     files: [],
     lastProcessedPosition: 0
   });
+
+  // Form Builder handlers
+  const handleFormGenerated = (formData: any) => {
+    setCurrentFormData(formData);
+    setShowFormBuilder(false);
+    setShowFormPreview(true);
+  };
+
+  const handleFormPreviewClose = () => {
+    setShowFormPreview(false);
+    setCurrentFormData(null);
+  };
+
+  const handleGetEmbedCode = () => {
+    setShowFormPreview(false);
+    setShowEmbedGenerator(true);
+  };
+
+  const handleEmbedGeneratorClose = () => {
+    setShowEmbedGenerator(false);
+    setShowFormPreview(true);
+  };
 
   // Clear old conversation data on component mount and create/restore sandbox
   useEffect(() => {
@@ -3019,15 +3050,13 @@ Focus on the key sections and content, making it clean and modern.`;
           </select>
           <Button 
             variant="code"
-            asChild
+            onClick={() => setShowFormBuilder(true)}
             size="sm"
             title="AI Form Builder"
           >
-            <a href="/form-builder">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </a>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
           </Button>
           <Button 
             variant="code"
@@ -3422,6 +3451,30 @@ Focus on the key sections and content, making it clean and modern.`;
 
 
 
+    </div>
+
+      {/* Form Builder Components */}
+      {showFormBuilder && (
+        <FormBuilder
+          onFormGenerated={handleFormGenerated}
+          onClose={() => setShowFormBuilder(false)}
+        />
+      )}
+
+      {showFormPreview && currentFormData && (
+        <FormPreview
+          formData={currentFormData}
+          onClose={handleFormPreviewClose}
+          onGetEmbedCode={handleGetEmbedCode}
+        />
+      )}
+
+      {showEmbedGenerator && currentFormData && (
+        <EmbedCodeGenerator
+          formData={currentFormData}
+          onClose={handleEmbedGeneratorClose}
+        />
+      )}
     </div>
   );
 }
